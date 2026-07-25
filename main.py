@@ -1,6 +1,9 @@
 import pygame
 import sys
 from logger import log_state, log_event
+from scripts.entities import *
+from scripts.utils import *
+from scripts.tilemap import *
 
 class Game:
     def __init__(self):
@@ -10,20 +13,32 @@ class Game:
         self.screen = pygame.display.set_mode((640,480))
         pygame.display.set_caption("platformer")
 
-        self.test_img = pygame.image.load('./data/images/clouds/cloud_1.png')
-        self.test_img.set_colorkey((0,0,0))
-        self.img_pos = [160, 260]
+        self.display = pygame.Surface((320, 240))
+
         self.movement = [False, False, False, False]
+
+        self.assets = {
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'large_decor': load_images('tiles/large_decor'),
+            'stone': load_images('tiles/stone'),
+            'player': load_image('entities/player.png')
+        }
+
+        self.player = PhysicsEntity(self, 'player', (50,50), (8,15))
+
+        self.tilemap = Tilemap(self, tile_size = 16)
 
     def run(self):
         def main():
             while True:
                 log_state()
-                self.screen.fill("blue")
-                self.img_pos[1] += (self.movement[1] - self.movement[0]) *5
-                self.img_pos[0] += (self.movement[3] - self.movement[2]) *5
+                self.display.fill((14,219,248))
 
-                self.screen.blit(self.test_img, self.img_pos)
+                self.tilemap.render(self.display)
+
+                self.player.update(((self.movement[3] - self.movement[2]),0))
+                self.player.render(self.display)
 
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -50,7 +65,7 @@ class Game:
 
 
 
-
+                self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
                 pygame.display.update()
                 self.clock.tick(60)
 
