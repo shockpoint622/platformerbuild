@@ -1,6 +1,6 @@
 import pygame
 import sys
-from logger import log_state, log_event
+#from logger import log_state, log_event
 
 class Game:
     def __init__(self):
@@ -22,3 +22,12 @@ class Game:
 
             pygame.display.update()
             self.clock.tick(60)
+
+        if __name__ == "__main__":
+            main()
+
+
+        pygame.quit()
+
+
+Game().run()
