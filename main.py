@@ -9,11 +9,11 @@ from scripts.clouds import *
 class Game:
     def __init__(self):
         pygame.init()
-        self.clock = pygame.time.Clock()
-        self.dt: float = 0.0
-        self.screen = pygame.display.set_mode((640,480))
-        pygame.display.set_caption("platformer")
 
+        pygame.display.set_caption("platformer")
+        self.clock = pygame.time.Clock()
+        #self.dt: float = 0.0
+        self.screen = pygame.display.set_mode((640,480))
         self.display = pygame.Surface((320, 240))
 
         self.movement = [False, False]
@@ -32,9 +32,9 @@ class Game:
 
         self.player = PhysicsEntity(self, 'player', (50,50), (8,15))
 
-        self.tilemap = Tilemap(self, tile_size = 16)
+        self.tilemap = Tilemap(self, tile_size=16)
 
-        self.scroll = [0,0]
+        self.scroll = [0, 0]
 
     def run(self):
 
@@ -42,9 +42,9 @@ class Game:
             log_state()
             self.display.blit(self.assets['background'], (0,0))
 
-            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
-            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
+            #self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
+            #self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
+            render_scroll = pygame.math.Vector2(int(self.scroll[0]), int(self.scroll[1]))
 
             self.clouds.update()
             self.clouds.render(self.display, offset=render_scroll)
@@ -75,7 +75,7 @@ class Game:
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(12)
 
 
 
