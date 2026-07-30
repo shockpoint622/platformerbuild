@@ -10,8 +10,18 @@ class PhysicsEntity:
         self.velocity = pygame.math.Vector2(0,0)
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
 
+        self.action = ''
+        self.anim_offset = (-3, -3)
+        self.flip = False
+        self.set_action('idle')
+
     def rect(self):
         return pygame.Rect(self.pos.x, self.pos.y, self.size.x, self.size.y)
+
+    def set_action(self, action: str):
+        if action != self.action:
+
+
 
     def update(self, tilemap, movement=(0,0)):
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
