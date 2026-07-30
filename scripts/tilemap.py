@@ -11,14 +11,14 @@ class Tilemap:
         self.offgrid_tiles = []
 
         for i in range(10):
-            self.tilemap[str(3 + i) + ';10'] = {'type': 'grass', 'variant': 1, 'pos': (3 + i, 10)}
-            self.tilemap['10;' + str(i + 5)] = {'type': 'stone', 'variant': 1, 'pos': (10, i + 5)}
+            self.tilemap[f'{3 + i};10'] = {'type': 'grass', 'variant': 1, 'pos': pygame.math.Vector2(3 + i, 10)}
+            self.tilemap[f'10;{i + 5}'] = {'type': 'stone', 'variant': 1, 'pos': pygame.math.Vector2(10, i + 5)}
 
     def tiles_around(self, pos):
         tiles = []
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))
         for offset in NEIGHBOR_OFFSETS:
-            check_loc = str(tile_loc[0] + offset[0]) + ';' + str(tile_loc[1] + offset[1])
+            check_loc = f'{tile_loc[0] + offset[0]};{tile_loc[1] + offset[1]}'
             if check_loc in self.tilemap:
                 tiles.append(self.tilemap[check_loc])
         return tiles
@@ -35,7 +35,16 @@ class Tilemap:
         for tile in self.offgrid_tiles:
             surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
 
-        for loc in self.tilemap:
-            tile = self.tilemap[loc]
-            surf.blit(self.game.assets[tile['type']][tile['variant']],
-                (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
+        for x in range(int(offset[0] // self.tile_size), int((offset[0] + surf.get_width()) // self.tile_size + 1)):
+            for y in range(int(offset[1] // self.tile_size), int((offset[1] + surf.get_height()) // self.tile_size + 1)):
+                loc = f"{x};{y}"
+                if loc in self.tilemap:
+                    tile = self.tilemap[loc]
+                    surf.blit(self.game.assets[tile['type']][tile['variant']],
+                            (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
+
+
+        #for loc in self.tilemap:
+        #    tile = self.tilemap[loc]
+        #    surf.blit(self.game.assets[tile['type']][tile['variant']],
+        #        (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))

@@ -42,8 +42,8 @@ class Game:
             log_state()
             self.display.blit(self.assets['background'], (0,0))
 
-            #self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
-            #self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
+            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
+            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
             render_scroll = pygame.math.Vector2(int(self.scroll[0]), int(self.scroll[1]))
 
             self.clouds.update()
@@ -75,7 +75,7 @@ class Game:
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
             pygame.display.update()
-            self.clock.tick(12)
+            self.clock.tick(60)
 
 
 
