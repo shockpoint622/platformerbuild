@@ -62,9 +62,9 @@ class Editor:
                         self.right_clicking = True
                     if self.shift:
                         if event.button == 4:
-                            self.tile_variant = (self.tile_variant - 1) % len(self.tile_list)
+                            self.tile_variant = (self.tile_variant - 1) % len(self.assets[self.tile_list[self.tile_group]])
                         if event.button == 5:
-                            self.tile_variant = (self.tile_variant + 1) % len(self.tile_list)
+                            self.tile_variant = (self.tile_variant + 1) % len(self.assets[self.tile_list[self.tile_group]])
                     else:
                         if event.button == 4:
                             self.tile_group = (self.tile_group -1 ) % len(self.tile_list)
