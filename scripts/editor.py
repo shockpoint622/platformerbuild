@@ -55,10 +55,10 @@ class Editor:
             mpos = pygame.mouse.get_pos()
             mpos = (mpos[0] / RENDER_SCALE, mpos[1] / RENDER_SCALE)
             tile_pos = pygame.math.Vector2(int((mpos[0] + self.scroll[0]) // self.tilemap.tile_size), int((mpos[1] + self.scroll[1]) // self.tilemap.tile_size))
-            tpos = f'{tile_pos.x};{tile_pos.y}'
+            tpos = f'{int(tile_pos.x)};{int(tile_pos.y)}'
 
             if self.clicking:
-                self.tilemap.tilemap[tpos] = {'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': (tile_pos.x, tile_pos.y)}
+                self.tilemap.tilemap[tpos] = {'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': tile_pos}
             if self.right_clicking:
                 if tpos in self.tilemap.tilemap:
                     del self.tilemap.tilemap[tpos]
