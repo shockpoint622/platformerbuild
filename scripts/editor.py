@@ -2,8 +2,8 @@ import pygame
 import sys
 from logger import log_state, log_event
 #from scripts.entities import *
-from scripts.utils import *
-from scripts.tilemap import *
+from utils import *
+from tilemap import *
 #from scripts.clouds import *
 
 RENDER_SCALE = 2.0
@@ -45,8 +45,23 @@ class Editor:
             log_state()
             self.display.fill((0,0,0))
 
+            render_scroll = pygame.math.Vector2(int(self.scroll[0]), int(self.scroll[1]))
+
+            self.tilemap.render(self.display, offset=render_scroll)
+
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
             current_tile_img.set_alpha(100)
+
+            mpos = pygame.mouse.get_pos()
+            mpos = (mpos[0] / RENDER_SCALE, mpos[1] / RENDER_SCALE)
+            tile_pos = pygame.math.Vector2(int((mpos[0] + self.scroll[0]) // self.tilemap.tile_size), int((mpos[1] + self.scroll[1]) // self.tilemap.tile_size))
+            tpos = f'{tile_pos.x};{tile_pos.y}'
+
+            if self.clicking:
+                self.tilemap.tilemap[tpos] = {'type': self.tile_list[self.tile_group], 'variant': self.tile_variant, 'pos': (tile_pos.x, tile_pos.y)}
+            if self.right_clicking:
+                if tpos in self.tilemap.tilemap:
+                    del self.tilemap.tilemap[tpos]
 
             self.display.blit(current_tile_img, (5,5))
 
@@ -58,6 +73,7 @@ class Editor:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         self.clicking = True
+                        print(mpos)
                     if event.button == 3:
                         self.right_clicking = True
                     if self.shift:
@@ -68,8 +84,16 @@ class Editor:
                     else:
                         if event.button == 4:
                             self.tile_group = (self.tile_group -1 ) % len(self.tile_list)
+                            self.tile_variant = 0
                         if event.button == 5:
                             self.tile_group = (self.tile_group +1) % len(self.tile_list)
+                            self.tile_variant = 0
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 1:
+                        self.clicking = False
+                    if event.button == 3:
+                        self.right_clicking = False
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
@@ -78,10 +102,11 @@ class Editor:
                         self.movement[0] = True
                     if event.key == pygame.K_RIGHT:
                         self.movement[1] = True
-                    if even.key == pygame.K_DOWN:
+                    if event.key == pygame.K_DOWN:
                         self.movement[3] = True
-                    if event.key == pygame.LSHIFT | pygame.RSHIFT:
+                    if event.key == pygame.K_LSHIFT:
                         self.shift = True
+
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement[0] = False
@@ -91,7 +116,7 @@ class Editor:
                         self.movement[2] = False
                     if event.key == pygame.K_DOWN:
                         self.movement[3] = False
-                    if event.key == pygame.LSHIFT | pygame.RSHIFT:
+                    if event.key == pygame.K_LSHIFT:
                         self.shift = False
 
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0,0))
