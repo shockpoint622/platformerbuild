@@ -82,7 +82,7 @@ class Tilemap:
             tile = self.tilemap[loc]
             neighbors = set()
             for shift in [(1, 0), (-1, 0), (0, -1), (0, 1)]:
-                check_loc = f'{tile['pos'][0] + shift[0]};{tile['pos'][1] + shift[1]}'
+                check_loc = f'{int(tile['pos'][0]) + shift[0]};{int(tile['pos'][1]) + shift[1]}'
                 if check_loc in self.tilemap:
                     if self.tilemap[check_loc]['type'] == tile['type']:
                         neighbors.add(shift)
