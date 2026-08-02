@@ -1,5 +1,8 @@
 import pygame
+import math
+import random
 import scripts.tilemap
+from scripts.particle import *
 
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size):
@@ -14,6 +17,8 @@ class PhysicsEntity:
         self.anim_offset = (-3, -3)
         self.flip = False
         self.set_action('idle')
+
+        self.last_movement = [0,0]
 
     def rect(self):
         return pygame.Rect(self.pos.x, self.pos.y, self.size.x, self.size.y)
@@ -60,6 +65,8 @@ class PhysicsEntity:
         if movement[0] < 0:
             self.flip = True
 
+        self.last_movement = movement
+
         self.velocity.y = min(5, self.velocity.y + 0.1)
 
         if self.collisions['down'] or self.collisions['up']:
@@ -76,6 +83,9 @@ class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'player', pos, size)
         self.air_time = 0
+        self.jumps = 1
+        self.wall_slide = False
+        self.dashing = 0
 
     def update(self, tilemap, movement=(0,0)):
         super().update(tilemap, movement=movement)
@@ -83,10 +93,78 @@ class Player(PhysicsEntity):
         self.air_time += 1
         if self.collisions['down']:
             self.air_time = 0
+            self.jumps = 1
 
-        if self.air_time > 4:
-            self.set_action('jump')
-        elif movement[0] != 0:
-            self.set_action('run')
+        self.wall_slide = False
+        if (self.collisions['right'] or self.collisions['left']) and self.air_time > 4:
+            self.wall_slide = True
+            self.velocity.y = min(self.velocity.y, 0.5)
+            if self.collisions['right']:
+                self.flip = False
+            else:
+                self.flip = True
+            self.set_action('wall_slide')
+
+        if not self.wall_slide:
+            if self.air_time > 4:
+                self.set_action('jump')
+            elif movement[0] != 0:
+                self.set_action('run')
+            else:
+                self.set_action('idle')
+
+        dash_abs = abs(self.dashing)
+        if dash_abs in {60, 50}:
+            for i in range(20):
+                angle = random.random() * math.pi * 2
+                speed = random.random() * 0.5 + 0.5
+                p_velo = [math.cos(angle) * speed, math.sin(angle) * speed]
+                self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=p_velo, frame=random.randint(0,7)))
+        if self.dashing > 0:
+            self.dashing = max(0, self.dashing - 1)
+        if self.dashing < 0:
+            self.dashing = min(0, self.dashing + 1)
+        if dash_abs > 50:
+            self.velocity.x = dash_abs / self.dashing * 8
+            if dash_abs == 51:
+                self.velocity.x *= 0.1
+            p_velo = [dash_abs / self.dashing * random.random() * 3, 0]
+            self.game.particles.append(Particle(self.game, 'particle', self.rect().center, velocity=p_velo, frame=random.randint(0,7)))
+
+
+        if self.velocity.x > 0:
+            self.velocity.x = max(self.velocity.x -0.1, 0)
         else:
-            self.set_action('idle')
+            self.velocity.x = min(self.velocity.x + 0.1, 0)
+
+    def render(self, surf, offset=(0,0)):
+        if abs(self.dashing) <= 50:
+            super().render(surf, offset=offset)
+
+
+    def jump(self):
+        if self.wall_slide:
+            if self.flip and self.last_movement[0] < 0:
+                self.velocity.x = 3.5
+                self.velocity.y = -2.5
+                self.air_time = 5
+                self.jumps = max(0, self.jumps - 1)
+                return True
+            elif not self.flip and self.last_movement[0] > 0:
+                self.velocity.x = -3.5
+                self.velocity.y = -2.5
+                self.air_time = 5
+                self.jumps = max(0, self.jumps - 1)
+                return True
+        elif self.jumps:
+            self.velocity.y = -3
+            self.jumps -= 1
+            self.air_time = 5
+            return True
+
+    def dash(self):
+        if not self.dashing:
+            if self.flip:
+                self.dashing = -60
+            else:
+                self.dashing = 60
