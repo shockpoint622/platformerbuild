@@ -7,12 +7,14 @@ from scripts.utils import *
 from scripts.tilemap import *
 from scripts.clouds import *
 from scripts.particle import *
+from scripts.spark import *
 
 class Game:
     def __init__(self):
         pygame.init()
 
         pygame.display.set_caption("platformer")
+        self.total_frames = 0
         self.clock = pygame.time.Clock()
         #self.dt: float = 0.0
         self.screen = pygame.display.set_mode((640,480))
@@ -28,35 +30,67 @@ class Game:
             'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
             'clouds': load_images('clouds'),
+            'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
+            'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
             'player/idle': Animation(load_images('player/idle'), img_dur=6),
             'player/run': Animation(load_images('player/run'), img_dur=4),
             'player/jump': Animation(load_images('player/jump')),
             'player/slide': Animation(load_images('player/slide')),
             'player/wall_slide': Animation(load_images('player/wall_slide')),
             'particle/leaf': Animation(load_images('particles/leaf'), img_dur=20, loop=False),
-            'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False)
+            'particle/particle': Animation(load_images('particles/particle'), img_dur=6, loop=False),
+            'gun': load_image('gun.png'),
+            'projectile': load_image('projectile.png'),
         }
 
         self.clouds = Clouds(self.assets['clouds'], count=16)
 
         self.player = Player(self, (50,50), (8,15))
 
+
+
         self.tilemap = Tilemap(self, tile_size=16)
-        self.tilemap.load('map.json')
+
+
+
+
+        self.load_level(0)
+
+    def load_level(self, map_id):
+        self.tilemap.load(f'data/maps/{map_id}.json')
 
         self.leaf_spawners = []
         for tree in self.tilemap.extract([('large_decor', 2)], keep=True):
             self.leaf_spawners.append(pygame.Rect(4 + tree['pos'][0], 4 + tree['pos'][1], 23, 13))
 
+        self.enemies = []
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+            if spawner['variant'] == 0:
+                self.player.pos.x = spawner['pos'][0]
+                self.player.pos.y = spawner['pos'][1]
+            else:
+                self.enemies.append(Enemy(self, (spawner['pos'][0], spawner['pos'][1]), (8,15)))
+
+        self.projectiles = []
         self.particles = []
+        self.sparks = []
 
         self.scroll = [0, 0]
+        self.dead = 0
+
+
+
 
     def run(self):
 
         while True:
             log_state()
             self.display.blit(self.assets['background'], (0,0))
+
+            if self.dead:
+                self.dead += 1
+                if self.dead > 40:
+                    self.load_level(0)
 
             self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
             self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
@@ -72,8 +106,43 @@ class Game:
 
             self.tilemap.render(self.display, offset=render_scroll)
 
-            self.player.update(self.tilemap, (self.movement[1] - self.movement[0],0))
-            self.player.render(self.display, offset=render_scroll)
+            for enemy in self.enemies.copy():
+                kill = enemy.update(self.tilemap, (0,0))
+                enemy.render(self.display, offset=render_scroll)
+                if kill:
+                    self.enemies.remove(enemy)
+
+            if not self.dead:
+                self.player.update(self.tilemap, (self.movement[1] - self.movement[0],0))
+                self.player.render(self.display, offset=render_scroll)
+
+            for proj in self.projectiles.copy():
+                proj[0].x += proj[1]
+                proj[2] += 1
+                img = self.assets['projectile']
+                self.display.blit(img, (proj[0].x - img.get_width() / 2 - render_scroll.x, proj[0].y - img.get_height()/ 2 - render_scroll.y))
+                if self.tilemap.solid_check(proj[0]):
+                    self.projectiles.remove(proj)
+                    for i in range(4):
+                        self.sparks.append(Spark(proj[0], random.random() - 0.5 + (math.pi if proj[1] > 0 else 0), 2 + random.random()))
+                elif proj[2] > 360:
+                    self.projectiles.remove(proj)
+                elif abs(self.player.dashing) < 50:
+                    if self.player.rect().collidepoint(proj[0]):
+                        self.projectiles.remove(proj)
+                        self.dead +=1
+                        for i in range(30):
+                            angle = random.random() * math.pi * 2
+                            speed = random.random() * 5
+                            self.sparks.append(Spark(self.player.rect().center, angle, 2 + random.random()))
+                            self.particles.append(Particle(self, 'particle', self.player.rect().center,
+                                velocity=[math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5], frame=random.randint(0, 7)))
+
+            for spark in self.sparks.copy():
+                kill = spark.update()
+                spark.render(self.display, offset=render_scroll)
+                if kill:
+                    self.sparks.remove(spark)
 
             for particle in self.particles.copy():
                 kill = particle.update()
