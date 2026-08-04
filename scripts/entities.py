@@ -92,6 +92,11 @@ class Player(PhysicsEntity):
         super().update(tilemap, movement=movement)
 
         self.air_time += 1
+
+        if self.air_time > 320:
+            self.game.screenshake = max(16, self.game.screenshake)
+            self.game.dead += 1
+
         if self.collisions['down']:
             self.air_time = 0
             self.jumps = 1
@@ -165,6 +170,7 @@ class Player(PhysicsEntity):
 
     def dash(self):
         if not self.dashing:
+            self.game.sfx['dash'].play()
             if self.flip:
                 self.dashing = -60
             else:
@@ -191,6 +197,7 @@ class Enemy(PhysicsEntity):
                 if (abs(dist[1]) < 16):
                     if (self.flip and dist[0] < 0):
                         self.game.projectiles.append([pygame.math.Vector2(self.rect().centerx - 7, self.rect().centery), -1.5, 0])
+                        self.game.sfx['shoot'].play()
                         for i in range(4):
                             self.game.sparks.append(Spark(self.game.projectiles[-1][0], random.random() - 0.5 + math.pi, 2 + random.random()))
                     if (not self.flip and dist[0] > 0):
@@ -210,6 +217,8 @@ class Enemy(PhysicsEntity):
 
         if abs(self.game.player.dashing) >= 50:
             if self.rect().colliderect(self.game.player.rect()):
+                self.game.screenshake = max(16, self.game.screenshake)
+                self.game.sfx['hit'].play()
                 for i in range(30):
                     angle = random.random() * math.pi * 2
                     speed = random.random() * 5
